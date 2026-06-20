@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Premium Live TV Streaming Service">
+    <link rel="shortcut icon" href="https://placehold.co/16x16/000000/ffffff?text=Premium+Live+TV+Streaming"/>
+    <title>SK Link TV</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --primary-dark: #121212;
+            --secondary-dark: #1E1E1E;
+            --accent-dark: #BB86FC;
+            --text-dark: #E1E1E1;
+            
+            --primary-light: #FFFFFF;
+            --secondary-light: #F5F5F5;
+            --accent-light: #6200EE;
+            --text-light: #333333;
+            
+            --current-primary: var(--primary-dark);
+            --current-secondary: var(--secondary-dark);
+            --current-accent: var(--accent-dark);
+            --current-text: var(--text-dark);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--current-text);
+            background-color: var(--current-primary);
+            transition: all 0.5s ease;
+            min-height: 100vh;
+        }
+
+        /* Animated Background */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50px;
+            padding: 5px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-toggle i {
+            font-size: 1.5rem;
+            padding: 10px;
+            color: var(--current-text);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+            padding-top: 80px;
+        }
+
+        /* Player Section */
+        .player-section {
+            background-color: var(--current-secondary);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .player-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        /* Responsive Embed */
+        .embed-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .embed-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #000;
+        }
+
+        /* Player Info */
+        .player-info {
+            padding: 15px 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .channel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            color: #fff;
+        }
+
+        .program-info {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            color: #ccc;
+        }
+
+        /* Channel List */
+        .channel-list {
+            background-color: var(--current-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            height: 100%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .channel-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .channel-list-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .channel-count {
+            background-color: var(--current-accent);
+            color: var(--current-primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            max-height: 70vh;
+            padding-right: 5px;
+        }
+        
+        /* Navbar Style Header */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .tv-link {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .tv-link:hover {
+            color: var(--current-accent);
+        }
+
+        /* Updated Channel Item & Image Views */
+        .channel-item {
+            background-color: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border-color: var(--current-accent);
+            background-color: rgba(255,255,255,0.06);
+        }
+
+        .channel-item.active {
+            border-color: var(--current-accent);
+            box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.3);
+            background-color: rgba(187, 134, 252, 0.1);
+        }
+
+        .channel-thumbnail-wrapper {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background-color: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .channel-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .channel-item:hover .channel-thumbnail {
+            transform: scale(1.1);
+        }
+
+        .channel-name {
+            padding: 10px 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Light Theme Adjustments */
+        body.light-theme {
+            --current-primary: var(--primary-light);
+            --current-secondary: var(--secondary-light);
+            --current-accent: var(--accent-light);
+            --current-text: var(--text-light);
+        }
+
+        body.light-theme .channel-list {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        body.light-theme .channel-item {
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        body.light-theme .channel-thumbnail-wrapper {
+            background-color: #f8f9fa;
+        }
+
+        body.light-theme .channel-name {
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        body.light-theme .player-info {
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .footer a {
+            color: var(--current-accent);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            .channel-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+                padding-top: 70px;
+            }
+            
+            .channel-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 10px;
+            }
+            
+            .channel-name {
+                font-size: 0.75rem;
+                padding: 6px 4px;
+            }
+            
+            .channel-list-title {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Custom scrollbar */
+        .channel-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .channel-grid::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .channel-grid::-webkit-scrollbar-thumb {
+            background: var(--current-accent);
+            border-radius: 10px;
+        }
+
+        .channel-grid::-webkit-scrollbar-thumb:hover {
+            background: rgba(187, 134, 252, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+
+    <header class="top-nav">
+        <a href="/" class="tv-link"><i class="fas fa-tv me-2"></i>SK Link TV</a>
+        <div class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="row g-4">
+            <div class="col-lg-9 col-md-8">
+                <div class="player-section">
+                    <div class="embed-container">
+                        <video id="video-player" controls autoplay></video>
+                        <div class="player-info">
+                            <div class="channel-title">Loading...</div>
+                            <div class="program-info">Please select a channel</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-4">
+                <div class="channel-list">
+                    <div class="channel-list-header">
+                        <h2 class="channel-list-title">Channels</h2>
+                        <div class="channel-count" id="channelCount">0</div>
+                    </div>
+                    <div class="channel-grid" id="channelGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div>
+            <img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fsohag1192%2FLive-Tv-Server&label=&icon=github&color=%23198754&message=&style=flat&tz=UTC" alt="GitHub hits">
+        </div>
+        <div class="mt-2">
+            © Copyright 2026 Manik, Developed By: <a href="https://t.me/MdSohagRana" target="_blank">manik</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- 1. M3U Data Injection ---
+        const rawM3U = `#EXTM3U
+
+# ----- Live -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/tsportshd.jpg" group-title="Live" ,Tsports
+http://10.100.11.11:4000/play/4236966184/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/United_Sports.png" group-title="Live" ,Unite8 Sports 2 HD
+http://10.100.11.11:4000/play/a0xs/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/unitesports1hd_1.png" group-title="Live" ,Unite8 Sports 1 HD
+http://10.100.11.11:4000/play/a0xa/index.m3u8
+
+
+# ----- Bangladeshi -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/nagorik.png" group-title="Bangladeshi" ,Nagorik TV
+http://103.89.248.22:8082/NAGORIK-TV/tracks-a1/index.fmp4.m3u8?token=9052412be7daaeba81d70f8a5c89c1ffdf8b2661-5df588a0a30bfbb06177363b519f2352-1776875233-1776864433
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/moviebangla.png" group-title="Bangladeshi" ,Movie Bangla TV
+http://10.100.11.11:4000/play/a03o/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/atnnews.jpg" group-title="Bangladeshi" ,ATN News
+http://10.100.11.11:4000/play/8861062737/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/anandatv.jpg" group-title="Bangladeshi" ,Ananda TV
+http://10.100.11.11:4000/play/9195852487/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/asiantv.jpg" group-title="Bangladeshi" ,Asian TV
+http://10.100.11.11:4000/play/a0gi/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/btvchottogram.png" group-title="Bangladeshi" ,BTV CTG
+http://10.100.11.11:4000/play/a0hm/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/banglatv.png" group-title="Bangladeshi" ,Bangla TV HD
+http://10.100.11.11:4000/play/8355425806/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/banglavision.png" group-title="Bangladeshi" ,Bangla Vision
+http://10.100.11.11:4000/play/2897390822/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/bijoytv.jpg" group-title="Bangladeshi" ,Bijoy TV
+http://10.100.11.11:4000/play/3158057073/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/boishakhitv.jpg" group-title="Bangladeshi" ,Boishakhi TV
+http://10.100.11.11:4000/play/4802327623/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/channeli.jpg" group-title="Bangladeshi" ,Channel I
+http://10.100.11.11:4000/play/3349914885/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/dbcnews.png" group-title="Bangladeshi" ,DBC NEWS
+http://10.100.11.11:4000/play/3034155434/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/deeptotv.jpg" group-title="Bangladeshi" ,Deepto TV HD
+http://10.100.11.11:4000/play/7219378758/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/deshtv.jpg" group-title="Bangladeshi" ,Desh TV
+http://10.100.11.11:4000/play/5490056533/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/ekattor.jpg" group-title="Bangladeshi" ,Ekattor TV
+http://10.100.11.11:4000/play/3434572570/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Ekushey.png" group-title="Bangladeshi" ,Ekushey TV
+http://10.100.11.11:4000/play/7282885840/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/independent.jpg" group-title="Bangladeshi" ,Independent Television
+http://10.100.11.11:4000/play/a0ge/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/jamunatv.jpg" group-title="Bangladeshi" ,Jamuna TV
+http://10.100.11.11:4000/play/8502556831/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/mohonatv.jpg" group-title="Bangladeshi" ,Mohona TV
+http://10.100.11.11:4000/play/6710328328/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/mytv.png" group-title="Bangladeshi" ,My TV
+http://10.100.11.11:4000/play/9700144461/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/ntv.jpg" group-title="Bangladeshi" ,NTV
+http://10.100.11.11:4000/play/7785083783/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/news24.png" group-title="Bangladeshi" ,News 24
+http://10.100.11.11:4000/play/6637924959/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/rtv.png" group-title="Bangladeshi" ,RTV
+http://10.100.11.11:4000/play/6673147865/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/satv.png" group-title="Bangladeshi" ,SA TV
+http://10.100.11.11:4000/play/9857306656/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sangsadtv.jpg" group-title="Bangladeshi" ,Sangsad TV
+http://10.100.11.11:4000/play/a0hp/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/channel24.png" group-title="Bangladeshi" ,Channel 24
+http://10.100.11.11:4000/play/a03c/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/channel9.png" group-title="Bangladeshi" ,Channel 9
+http://10.100.11.11:4000/play/a0gr/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/somoytv.png" group-title="Bangladeshi" ,Somoy Tv
+https://live.thebosstv.com:30443/dwlive/Somoy-TV/chunks.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/btv.png" group-title="Bangladeshi" ,BTV
+http://10.100.11.11:4000/play/a0hn/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Star_News.png" group-title="Bangladeshi" ,Star News HD
+http://10.100.11.11:4000/play/a0xv/index.m3u8
+
+
+# ----- Documentary -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/travelxp.png" group-title="Documentary" ,Travelxp
+http://10.100.11.11:4000/play/a0pj/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/animalplanet.jpg" group-title="Documentary" ,Animal Planet HD
+http://10.100.11.11:4000/play/a0p0/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/historytv18hd.png" group-title="Documentary" ,History TV18 HD
+http://10.100.11.11:4000/play/a0sf/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/discoveryhd.png" group-title="Documentary" ,Discovery HD
+http://10.100.11.11:4000/play/a0sr/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/discoveryscience.jpg" group-title="Documentary" ,Discovery Science
+http://10.100.11.11:4000/play/a0ss/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Investigation_discovery.png" group-title="Documentary" ,Investigation Discovery
+http://10.100.11.11:4000/play/a0sp/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/nationalgeographic.jpg" group-title="Documentary" ,NATIONAL GEOGRAPHIC HD
+http://10.100.11.11:4000/play/a0sm/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/discovery_turbo_1.png" group-title="Documentary" ,Discovery Turbo
+http://10.100.11.11:4000/play/a0su/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/natgeowild.png" group-title="Documentary" ,Nat Geo Wild HD
+http://10.100.11.11:4000/play/a0t3/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/bbcearth.jpg" group-title="Documentary" ,Sony BBC Earth HD
+http://10.100.11.11:4000/play/a0up/index.m3u8
+
+
+# ----- English -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/disney_inter.png" group-title="English" ,Disney International HD
+http://10.100.11.11:4000/play/a0pm/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starmovieshd.png" group-title="English" ,STAR Movies HD
+http://10.100.11.11:4000/play/a0sa/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starmoviesselecthd.png" group-title="English" ,STAR Movies Select HD
+http://10.100.11.11:4000/play/a0s9/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Movies_Now.png" group-title="English" ,Movies Now HD
+http://10.100.11.11:4000/play/a0sz/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonypixhd.png" group-title="English" ,Sony PIX HD
+http://10.100.11.11:4000/play/a0s8/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colorsinfinityhd.png" group-title="English" ,Colors Infinity HD
+http://10.100.11.11:4000/play/a0v1/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/MNX_Movie.png" group-title="English" ,MNX Movie
+http://10.100.11.11:4000/play/a0vl/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Sony_Movie.png" group-title="English" ,Sony Movies
+http://10.100.11.11:4000/play/a0wx/index.m3u8
+
+
+# ----- Hindi -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Zee_Cafe.png" group-title="Hindi" ,Zee Cafe HD
+http://10.100.11.11:4000/play/a0pl/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/&flixhd.png" group-title="Hindi" ,&Flix HD
+http://10.100.11.11:4000/play/a0sb/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starplus.png" group-title="Hindi" ,STAR Plus HD
+http://10.100.11.11:4000/play/a096/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/zeetvhd.jpg" group-title="Hindi" ,Zee TV HD
+http://10.100.11.11:4000/play/a09t/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colorshd.png" group-title="Hindi" ,Colors HD
+http://10.100.11.11:4000/play/a097/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysab.png" group-title="Hindi" ,SONY SAB
+http://10.100.11.11:4000/play/a090/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysab.png" group-title="Hindi" ,SONY SAB HD
+http://10.100.11.11:4000/play/a0ax/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysethd.jpg" group-title="Hindi" ,SET HD
+http://10.100.11.11:4000/play/a092/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonymaxhd.png" group-title="Hindi" ,SONY MAX
+http://10.100.11.11:4000/play/a09o/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/zeecinemahd.jpg" group-title="Hindi" ,Zee Cinema HD
+http://10.100.11.11:4000/play/a07l/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/stargoldhd.png" group-title="Hindi" ,STAR GOLD HD
+http://10.100.11.11:4000/play/a0ay/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/StarGold2.png" group-title="Hindi" ,Star Gold 2
+http://10.100.11.11:4000/play/a0b0/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/StarGoldRomance.png" group-title="Hindi" ,Star Gold Romance
+http://10.100.11.11:4000/play/a0bg/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/&tv.png" group-title="Hindi" ,&tv
+http://10.100.11.11:4000/play/a093/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/alltimemovies.png" group-title="Hindi" ,All Time Movies
+http://10.100.11.11:4000/play/a0i1/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/b4ubojhpuri.png" group-title="Hindi" ,B4U Bhojpuri
+http://10.100.11.11:4000/play/a0hz/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/b4ukadak.jpg" group-title="Hindi" ,B4U Kadak
+http://10.100.11.11:4000/play/a0i7/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/b4umovies.png" group-title="Hindi" ,B4U Movies
+http://10.100.11.11:4000/play/a0i0/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/b4umusic.jpg" group-title="Hindi" ,B4U Music
+http://10.100.11.11:4000/play/a0hy/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colorscineplessuperhits.jpg" group-title="Hindi" ,Colors Cineplex Superhits
+http://10.100.11.11:4000/play/a0i4/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/ddnational.png" group-title="Hindi" ,DD National
+http://10.100.11.11:4000/play/a0hv/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/dangal2.png" group-title="Hindi" ,Dangal 2
+http://10.100.11.11:4000/play/a0i3/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/goldminesmovies.jpg" group-title="Hindi" ,Goldmines Movies
+http://10.100.11.11:4000/play/a0ic/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colorsinfinityhd.png" group-title="Hindi" ,Color
+http://10.100.11.11:4000/play/a0ib/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/zeeanmolcinema.png" group-title="Hindi" ,Zee Anmol Cinema
+http://10.100.11.11:4000/play/a0i9/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/stargoldthrills.png" group-title="Hindi" ,Star Gold Thrills
+http://10.100.11.11:4000/play/a0cs/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starbharat.jpg" group-title="Hindi" ,Star Bharat
+http://10.100.11.11:4000/play/a0cy/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Music_india.png" group-title="Hindi" ,Music India
+https://cdn-2.pishow.tv/live/226/master.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/StarBharatLogo.png" group-title="Hindi" ,Star Bharat HD
+http://10.100.11.11:4000/play/a0kx/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starutsav.jpg" group-title="Hindi" ,Star Utsav Movies
+http://10.100.11.11:4000/play/a0v3/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/StarGold2.png" group-title="Hindi" ,Star Gold 2 HD
+http://10.100.11.11:4000/play/a0pn/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/andpictures_HD.png" group-title="Hindi" ,& Picture HD
+http://10.100.11.11:4000/play/a0si/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/And_TV_logo.png" group-title="Hindi" ,&tv
+http://10.100.11.11:4000/play/a093/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/TV_HD.png" group-title="Hindi" ,&tv HD
+http://10.100.11.11:4000/play/a0sj/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/stargoldselecthd.png" group-title="Hindi" ,Star Gold Select HD
+http://10.100.11.11:4000/play/a0sh/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/MTV_HD.png" group-title="Hindi" ,MTV HD
+http://10.100.11.11:4000/play/a0s6/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Zee_Talkies.png" group-title="Hindi" ,Zee Talkies HD
+http://10.100.11.11:4000/play/a0sn/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colors_cineplex_bollwood.png" group-title="Hindi" ,Colors Cineplex Bollywood
+http://10.100.11.11:4000/play/a0t0/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Defult.png" group-title="Hindi" ,Sony Wah
+http://10.100.11.11:4000/play/a0u0/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Defult.png" group-title="Hindi" ,Action Cinema
+http://10.100.11.11:4000/play/a0tm/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colorsrishtey.png" group-title="Hindi" ,Colors Rishtey
+http://10.100.11.11:4000/play/a0u1/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/9xm.jpg" group-title="Hindi" ,9xM
+https://9xjio.wiseplayout.com/9XM/master.m3u8
+
+
+# ----- Indian Bangla -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starjalshahd.png" group-title="Indian Bangla" ,Star Jalsha HD
+http://10.100.11.11:4000/play/a07g/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonyaath.png" group-title="Indian Bangla" ,Sony Aath
+http://10.100.11.11:4000/play/4268982371/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/enter10bangla.jpg" group-title="Indian Bangla" ,Enterr 10 Bangla
+https://live-bangla.akamaized.net/liveabr/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colorsbangla.png" group-title="Indian Bangla" ,Colors Bangla HD
+http://10.100.11.11:4000/play/a0ki/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/jalshamovies.png" group-title="Indian Bangla" ,Jalsha Movies HD
+http://10.100.11.11:4000/play/a0p1/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/zeebanglahd.png" group-title="Indian Bangla" ,Zee Bangla HD
+http://10.100.11.11:4000/play/a0sd/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sunbangla.png" group-title="Indian Bangla" ,Sun Bangla
+http://10.100.11.11:4000/play/a0va/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonyaath.png" group-title="Indian Bangla" ,Sony Aath Bangla
+http://10.100.11.11:4000/play/a0vc/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/bangla_plus.png" group-title="Indian Bangla" ,Bangla Plus HD
+https://live-stream.utkalbongo.com/hls/livebanglatvstream.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Bengali_Beats.png" group-title="Indian Bangla" ,Bengali Beats
+https://tplay.live/originals/bengali-beats/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/colorsbanglacinema.jpg" group-title="Indian Bangla" ,Colors Bangla Cinema
+http://10.100.11.11:4000/play/a0w6/index.m3u8
+
+
+# ----- Islamic -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Sharjah_quran.png" group-title="Islamic" ,Sarjha Quran
+https://live.kwikmotion.com/sharjahtvquranlive/shqurantv.smil/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/madanichannelbangla.png" group-title="Islamic" ,Madani TV
+http://10.100.11.11:4000/play/a003/index.m3u8
+
+
+# ----- Kids -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/nickjr.png" group-title="Kids" ,Nick Jr
+http://10.100.11.11:4000/play/a0b5/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/nick.jpg" group-title="Kids" ,Nick
+http://10.100.11.11:4000/play/a0xu/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/nickelodeonsonic.png" group-title="Kids" ,Sonic
+http://10.100.11.11:4000/play/a0b8/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/cartoonnetwork.png" group-title="Kids" ,Cartoon Network HD
+http://10.100.11.11:4000/play/a0sl/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Super_Hungama.png" group-title="Kids" ,Super Hungama
+http://10.100.11.11:4000/play/a0vd/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/durontotv.png" group-title="Kids" ,Duronto TV
+http://10.100.11.11:4000/play/a0i5/index.m3u8
+
+
+# ----- Others -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Aajtak.png" group-title="Others" ,Aaj Tak
+http://10.100.11.11:4000/play/a0uw/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Ddnews.png" group-title="Others" ,DD News HD
+http://10.100.11.11:4000/play/a0hu/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Zee_Business.png" group-title="Others" ,Zee Business
+http://10.100.11.11:4000/play/a0de/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/CNNNews18.png" group-title="Others" ,CNN News 18
+http://10.100.11.11:4000/play/a00k/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/France24.png" group-title="Others" ,France 24
+http://10.100.11.11:4000/play/a00j/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/dw.png" group-title="Others" ,DW
+http://10.100.11.11:4000/play/a00i/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/aljazeeraenglish.png" group-title="Others" ,Al Jazeera English
+https://live-hls-apps-aje-fa.getaj.net/AJE/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/r.bangla.png" group-title="Others" ,R. Bangla
+https://vg-republictvlive.akamaized.net/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/vglive-sk-456368/main.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/CNN.png" group-title="Others" ,CNN News
+http://10.100.11.11:4000/play/a0v9/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/cnbe_tv18.png" group-title="Others" ,CNBC TV18
+http://10.100.11.11:4000/play/a0pf/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/India_Today.jpg" group-title="Others" ,INDIA TODAY
+http://10.100.11.11:4000/play/a0t1/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Defult.png" group-title="Others" ,Zee News HD
+http://10.100.11.11:4000/play/a0pq/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/bbcnews.png" group-title="Others" ,BBC News
+http://10.100.11.11:4000/play/a0da/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Iran_Press.png" group-title="Others" ,Iran PressTV
+https://live.presstv.ir/hls/presstv_5_482/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Try_World.png" group-title="Others" ,Try World
+https://tv-trtworld.medya.trt.com.tr/master.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/RT_News.png" group-title="Others" ,RT News
+https://rt-glb.rttv.com/live/rtnews/playlist.m3u8?v=1
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/Global_News.png" group-title="Others" ,Global News
+https://live.corusdigitaldev.com/groupb/live/3062d0e3-ed4c-4f47-8482-95648250f4b8/live.isml/.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/wion.png" group-title="Others" ,WION
+http://10.100.11.11:4000/play/a0wi/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/NDTV.png" group-title="Others" ,NDTV
+http://10.100.11.11:4000/play/a0wk/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/republic.png" group-title="Others" ,Republic TV
+http://10.100.11.11:4000/play/a0wo/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/time_now.png" group-title="Others" ,Time Now
+http://10.100.11.11:4000/play/a0ws/index.m3u8
+
+
+# ----- Sports -----
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports1hd.png" group-title="Sports" ,Star Sports 1 HD
+http://10.100.11.11:4000/play/a0bl/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/DDSports.png" group-title="Sports" ,DD Sports HD
+http://10.100.11.11:4000/play/a0hw/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysportsten3hd.png" group-title="Sports" ,Sony Sports3 Hindi
+http://10.100.11.11:4000/play/a0xd/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports3.jpg" group-title="Sports" ,Star Sports3
+http://10.100.11.11:4000/play/a0b3/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysportsten2hd.png" group-title="Sports" ,SONY SPORTS TEN 2
+http://10.100.11.11:4000/play/a0pa/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/tsportshd.jpg" group-title="Sports" ,T Sports HD
+http://10.100.11.11:4000/play/4236966184/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports1hd.png" group-title="Sports" ,Star Sports 1 Hindi
+http://10.100.11.11:4000/play/a0b2/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports2hd.png" group-title="Sports" ,Star Sports 2 Hindi HD
+http://10.100.11.11:4000/play/a0l1/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsportsselect1hd.png" group-title="Sports" ,Star Sports Select 1 HD
+http://10.100.11.11:4000/play/a07e/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsportsselect2hd.png" group-title="Sports" ,Star Sports Select 2 HD
+http://10.100.11.11:4000/play/a07h/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysportsten5hd.png" group-title="Sports" ,Sony Sports Ten 5
+http://10.100.11.11:4000/play/a0do/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysportsten1hd.png" group-title="Sports" ,SONY SPORTS TEN 1
+http://10.100.11.11:4000/play/a0lc/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports1hd.png" group-title="Sports" ,Star Sports 1 Hindi HD
+http://10.100.11.11:4000/play/a0l1/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports2hd.png" group-title="Sports" ,Star Sports 2 HD
+http://10.100.11.11:4000/play/a0ky/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports2hd.png" group-title="Sports" ,Star Sports 2 Hindi
+http://10.100.11.11:4000/play/a0kz/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/starsports3.jpg" group-title="Sports" ,Star Sports 3
+http://10.100.11.11:4000/play/a0rk/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/sonysportsten2hd.png" group-title="Sports" ,SONY SPORTS TEN 2 HD
+http://10.100.11.11:4000/play/a0s7/index.m3u8
+
+#EXTINF:-1 tvg-logo="http://172.16.254.200/tvlogo2/EurosportHD.png" group-title="Sports" ,Eurosport HD
+http://10.100.11.11:4000/play/a0so/index.m3u8`;
+
+        // --- 2. Parse M3U ---
+        function parseM3U(data) {
+            const lines = data.split('\n');
+            const channels = [];
+            let currentChannel = {};
+
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('#EXTINF:')) {
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                    currentChannel.logo = logoMatch ? logoMatch[1] : 'https://placehold.co/420x300/1a1a1a/ffffff?text=LIVE%20TV';
+
+                    const groupMatch = line.match(/group-title="([^"]+)"/);
+                    currentChannel.group = groupMatch ? groupMatch[1] : 'Live TV';
+
+                    const parts = line.split(',');
+                    currentChannel.name = parts[parts.length - 1];
+                } else if (line.startsWith('http')) {
+                    currentChannel.url = line;
+                    channels.push(currentChannel);
+                    currentChannel = {}; 
+                }
+            }
+            return channels;
+        }
+
+        const channelData = parseM3U(rawM3U);
+
+        // --- 3. Render Channels to DOM ---
+        const channelGrid = document.getElementById('channelGrid');
+        document.getElementById('channelCount').textContent = channelData.length + " Channels";
+
+        channelData.forEach((ch, index) => {
+            const item = document.createElement('div');
+            item.className = 'channel-item';
+            
+            // Thumbnail handling (fallback if image fails to load)
+            const fallbackImg = `https://placehold.co/420x300/1a1a1a/ffffff?text=${encodeURIComponent(ch.name)}`;
+            
+            // Updated HTML structure for the new image view
+            item.innerHTML = `
+                <div class="channel-thumbnail-wrapper">
+                    <img src="${ch.logo}" class="channel-thumbnail" alt="${ch.name}" onerror="this.src='${fallbackImg}'">
+                </div>
+                <div class="channel-name">${ch.name}</div>
+            `;
+            
+            item.addEventListener('click', function(e) {
+                changeChannel(ch.url, ch.name, ch.group, this);
+            });
+
+            channelGrid.appendChild(item);
+        });
+
+        // Global variable to hold HLS instance
+        let hlsInstance = null;
+
+        // --- 4. Video Player & Channel Change Logic ---
+        function changeChannel(url, channelName, programInfo, element) {
+            const video = document.getElementById('video-player');
+            
+            if (hlsInstance) {
+                hlsInstance.destroy();
+            }
+
+            if (Hls.isSupported()) {
+                hlsInstance = new Hls();
+                hlsInstance.loadSource(url);
+                hlsInstance.attachMedia(video);
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.play().catch(e => console.log("Auto-play prevented", e));
+                });
+            } 
+            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.addEventListener('loadedmetadata', function() {
+                    video.play();
+                });
+            }
+
+            // Update UI
+            document.querySelector('.channel-title').textContent = channelName;
+            document.querySelector('.program-info').textContent = "Group: " + programInfo;
+            
+            const items = document.querySelectorAll('.channel-item');
+            items.forEach(item => item.classList.remove('active'));
+            if (element) {
+                element.classList.add('active');
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // --- 5. Theme & Initialization ---
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        const savedTheme = localStorage.getItem('theme') || 
+                          (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        
+        if (savedTheme === 'light') {
+            body.classList.add('light-theme');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-theme');
+            const isLight = body.classList.contains('light-theme');
+            
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            themeToggle.innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        });
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            const items = document.querySelectorAll('.channel-item');
+            if(items.length === 0) return;
+
+            const currentActive = document.querySelector('.channel-item.active');
+            let currentIndex = currentActive ? Array.from(items).indexOf(currentActive) : 0;
+            
+            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % items.length;
+            } else if (e.key >= '1' && e.key <= '9') {
+                currentIndex = parseInt(e.key) - 1;
+                if (currentIndex >= items.length) currentIndex = items.length - 1;
+            } else {
+                return;
+            }
+            
+            items[currentIndex].click();
+        });
+
+        // Initialize with first channel active on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (channelData.length > 0) {
+                document.querySelector('.channel-item').click();
+            }
+        });
+    </script>
+</body>
+</html>
